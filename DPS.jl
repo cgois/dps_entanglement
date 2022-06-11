@@ -3,7 +3,8 @@ using Combinatorics, LinearAlgebra
 
 include("BosonicSymmetry.jl")
 
-"""Maximum visibility (w.r.t. random noise) s.t. the DPS criterion is certified."""
+"""Maximum visibility (w.r.t. random noise) s.t. the DPS criterion is certified.
+An objective value of 1 means feasibility (unconclusive), and < 1 means entanglement."""
 function maximally_mixed_distance(state, local_dim, n::Integer=3; ppt::Bool=true)
     # Constants
     dim = size(state, 1)
@@ -20,7 +21,7 @@ function maximally_mixed_distance(state, local_dim, n::Integer=3; ppt::Bool=true
     @variable(problem, 0 <= vis <= 1)
     Q = @variable(problem, [1:Qdim, 1:Qdim] in ComplexOptInterface.HermitianPSDCone())
     if ppt
-        # Dummy vars. to enforce PPT (not possible directly in ComplexOptInterface).
+        # Dummy vars. to enforce PPT (not possible directly in ComplexOptInterface?).
         fulldim = prod(dims)
         PSD = @variable(problem, [1:fulldim, 1:fulldim] in ComplexOptInterface.HermitianPSDCone())
     end
@@ -44,8 +45,8 @@ end
 #==========================
 Helper functions
 ==========================#
-eye(d) = Matrix{ComplexF64}(I(d))
 
+eye(d) = Matrix{ComplexF64}(I(d))
 
 """Partial trace for multiple subsystems."""
 function ptr(oper, syss, DIMS)
@@ -63,29 +64,4 @@ function ptransp(oper, syss, dims)
         oper = partialtranspose(oper, sys, dims)
     end
     oper
-end
-
-"""Example for the GHZ state."""
-function ghz_entanglement(dim, n; ppt=true)
-    @show dim n ppt
-    @time maximally_mixed_distance(ghz(dim), dim, n, ppt=ppt)
-end
-
-#==========================
-Example
-==========================#
-"""GHZ state."""
-function ghz(d::Integer=2, parties::Integer=2, ket::Bool=false)
-    ghz = zeros(ComplexF64, d^parties)
-    offset = 0
-    for p in 0:parties-1
-        offset += d^p
-    end
-    for p in 0:d-1
-        ghz[p * offset + 1] = 1 / sqrt(d)
-    end
-    if ket
-        return ghz
-    end
-    ghz * ghz'
 end

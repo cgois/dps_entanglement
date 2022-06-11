@@ -14,7 +14,7 @@ end
 
 """Unitary to permute subsystems of dimension `dim` w.r.t. vector `perm`."""
 function permutation_operator(dim::Int, perm::Vector)
-    # This trick only works up to a 62x62 permutation matrix because of basis conversion.
+    # This trick only works for moderate dimensions because of basis conversion.
     BASIS=vcat(0:9, 'A':'Z', 'a':'z')
     n = length(perm)
     # `dim`-ary basis with length `n`.
