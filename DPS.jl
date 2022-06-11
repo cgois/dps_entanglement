@@ -1,4 +1,4 @@
-using JuMP, Convex, ComplexOptInterface, SCS
+using Convex, SCS
 using Combinatorics, LinearAlgebra
 
 include("BosonicSymmetry.jl")
@@ -13,38 +13,27 @@ function maximally_mixed_distance(state, local_dim, n::Integer=3; ppt::Bool=true
     P = kron(eye(local_dim), symmetric_projection(local_dim, n)) # Bosonic subspace projector.
     Qdim = local_dim * binomial(n + local_dim - 1, local_dim - 1)  # Dim. extension w/ bosonic symmetries.
 
-    problem = Model(SCS.Optimizer)
-    COI = ComplexOptInterface # Adds complex number support do JuMP.
-    COI.add_all_bridges(problem)
+    # Program setup
+    vis = Variable()
+    Q = HermitianSemidefinite(Qdim)
+    problem = maximize(vis)
 
-    # Optimization variables
-    @variable(problem, 0 <= vis <= 1)
-    Q = @variable(problem, [1:Qdim, 1:Qdim] in ComplexOptInterface.HermitianPSDCone())
-    if ppt
-        # Dummy vars. to enforce PPT (not possible directly in ComplexOptInterface).
-        fulldim = prod(dims)
-        PSD = @variable(problem, [1:fulldim, 1:fulldim] in ComplexOptInterface.HermitianPSDCone())
-    end
-
-    # Constraints
     noisy_state = vis * state + (1 - vis) * noise
-    @constraint(problem, noisy_state .== ptr(P * Q * P', 3:n+1, dims))
+    problem.constraints += noisy_state == ptr(P * Q * P', 3:n+1, dims)
     if ppt
         ssys = Int.(1:ceil(n / 2) + 1)
-        @constraint(problem, PSD .== ptransp(P * Q * P', ssys, dims))
+        problem.constraints += ptransp(P * Q * P', ssys, dims) in :SDP
     end
 
     # Solution
-    @objective(problem, Max, vis)
-    @show problem
-    optimize!(problem)
-    @show solution_summary(problem, verbose=true)
+    solve!(problem, SCS.Optimizer, silent_solver=false)
     problem, Q
 end
 
 #==========================
 Helper functions
 ==========================#
+
 eye(d) = Matrix{ComplexF64}(I(d))
 
 """Partial trace for multiple subsystems."""

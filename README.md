@@ -1,7 +1,7 @@
 # Entanglement certification via symmetric extensions.
 Implementation of the [symmetric extensions criterion](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.69.022308) with bosonic symmetry and PPT constraint.
 
-Uses the `SCS` solver and `JuMP`/`ComplexOptInterface` for modelling, `Convex` for the partial trace and partial transpose operations, and `Combinatorics` to generate the projection onto the symmetric subspace, so these should be installed.
+Uses the `SCS` solver, `Convex` for modelling, and `Combinatorics` to generate the projection onto the symmetric subspace, so these should be installed.
 
 Check `Examples.jl` for... examples.
 
